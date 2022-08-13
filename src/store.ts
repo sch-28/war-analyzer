@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import type { BDO_Log } from "./types/log";
 import type { Player } from "./types/player";
-import { War } from "./types/war";
+import type { War } from "./types/war";
 
 let l_guilds: { [key: string]: Player[] } = { Guild: [] };
 let l_logs: BDO_Log[] = [];

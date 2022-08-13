@@ -55,8 +55,7 @@
 		gap: 0.75rem;
 	}
 
-	.war_container,
-	.add_war {
+	.war_container {
 		border: 0.125em dashed var(--primary-color);
 		border-radius: 1.5625em;
 		padding: 1rem;
