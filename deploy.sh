@@ -7,7 +7,10 @@ set -e
 npm run build
 
 # navigate into the build output directory
-cd public
+rm -rf dist
+mkdir -p dist
+cp -r public/. dist/
+cd dist
 git init
 git branch -m main
 git add -A
