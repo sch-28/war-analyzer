@@ -62,7 +62,7 @@
 	}
 
 	function show_error() {
-		snackbar.showSnackbar({ props: { text: "Invalid JSON file" } });
+		snackbar.showSnackbar({ props: { text: "Invalid log file" } });
 		files = [];
 	}
 
