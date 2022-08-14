@@ -10,3 +10,5 @@ The logs need to be in the following format:
 ```
 
 and uploaded as a *.log file.
+
+Try it out: [link](http://war-analyzer.oracle-tools.site/)
