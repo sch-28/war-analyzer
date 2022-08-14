@@ -6,7 +6,7 @@
     import { wars } from "../store";
 
     import type { Player } from "../types/player";
-    import type { Guild, War } from "../types/war";
+    import { Guild, War } from "../types/war";
 
     export let player_name = "";
     export let player_guild = "";
@@ -64,38 +64,40 @@
     }
 
     function get_total_kills() {
-        return player_stats.reduce((sum, player) => sum + player.kill_count, 0);
+        return War.get_total_kills_players(player_name, war_stats);
     }
     function get_total_deaths() {
-        return player_stats.reduce(
-            (sum, player) => sum + player.death_count,
-            0
-        );
+        return War.get_total_deaths_players(player_name, war_stats);
     }
 
     function get_avg_kills() {
-        return (get_total_kills() / player_stats.length).toFixed(2);
+        return War.get_avg_kills_players(player_name, war_stats).toFixed(2);
     }
     function get_avg_deaths() {
-        return (get_total_deaths() / player_stats.length).toFixed(2);
+        return War.get_avg_deaths_players(player_name, war_stats).toFixed(2);
     }
     function get_kd() {
-        if (get_total_deaths() == 0) return get_total_kills();
-        return (get_total_kills() / get_total_deaths()).toFixed(2);
+        const kills = get_total_kills();
+        const deaths = get_total_deaths();
+        if (deaths == 0) return kills;
+        return (kills / deaths).toFixed(2);
     }
 
     function get_joined_percentage() {
-        return ((player_stats.length / $wars.length) * 100).toFixed(0);
+        return (
+            War.get_joined_wars_percentage(
+                player_name,
+                player_guild,
+                war_stats
+            ) * 100
+        ).toFixed(0);
     }
 
     function kill_diff() {
-        const guild_player_amount = guild_stats.reduce(
-            (sum, g) => g.players.length + sum,
-            0
+        const guild_avg_kills = War.get_avg_player_kills_guilds(
+            player_guild,
+            war_stats
         );
-        const guild_avg_kills =
-            guild_stats.reduce((sum, g) => sum + g.kill_count, 0) /
-            guild_player_amount;
 
         const player_avg_kills = get_total_kills() / player_stats.length;
 
@@ -103,14 +105,10 @@
     }
 
     function death_diff() {
-        const guild_player_amount = guild_stats.reduce(
-            (sum, g) => g.players.length + sum,
-            0
+        const guild_avg_deaths = War.get_avg_player_deaths_guilds(
+            player_guild,
+            war_stats
         );
-
-        const guild_avg_deaths =
-            guild_stats.reduce((sum, g) => sum + g.death_count, 0) /
-            guild_player_amount;
 
         const player_avg_deaths = get_total_deaths() / player_stats.length;
 
@@ -118,14 +116,12 @@
     }
 
     function has_higher_kd() {
-        const guild_kd =
-            guild_stats.reduce((sum, g) => sum + g.kd, 0) /
-            guild_stats[0].players.length;
-
-        const player_kd = player_stats.reduce(
-            (sum, p) => p.kill_death_ration,
-            0
-        );
+        const guild_kd = War.get_avg_kd_guilds(player_guild, war_stats);
+        const kills = get_total_kills();
+        const deaths = get_total_deaths();
+        let player_kd = 0;
+        if (deaths == 0) player_kd = kills;
+        else player_kd = kills / deaths;
 
         return +(player_kd - guild_kd).toFixed(2);
     }
@@ -198,7 +194,10 @@
             <td>joined wars</td>
             <td />
             <td
-                >{player_stats.length}/{$wars.length} ({get_joined_percentage()}%)</td
+                >{player_stats.length}/{War.get_wars_count(
+                    player_guild,
+                    war_stats
+                )} ({get_joined_percentage()}%)</td
             >
         </tr>
     </table>

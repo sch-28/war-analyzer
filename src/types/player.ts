@@ -1,4 +1,5 @@
 import type { BDO_Log } from "./log";
+import type { War } from "./war";
 
 export class Player {
 	name: string;
@@ -61,4 +62,5 @@ export class Player {
 
 		return highest_killstreak;
 	}
+
 }

@@ -6,7 +6,7 @@
     import { wars } from "../store";
 
     import type { Player } from "../types/player";
-    import type { Guild, War } from "../types/war";
+    import { Guild, War } from "../types/war";
     import { CheckboxGroup } from "attractions";
 
     export let player_guild = "";
@@ -17,6 +17,8 @@
     let player_stats: { [name: string]: Player[] } = {};
 
     let checkbox_data = [];
+
+    let selected_wars: War[] = [];
 
     $: {
         all_wars = $wars;
@@ -40,12 +42,13 @@
     $: {
         guild_stats = [];
         war_stats = [];
+        player_stats = {};
 
         // get all selected wars
         const checked_checkboxes = checkbox_data
             .filter((ch) => ch.checked)
             .map((ch) => ch.value);
-        const selected_wars = all_wars.filter((w) =>
+        selected_wars = all_wars.filter((w) =>
             checked_checkboxes.includes(w.name)
         );
 
@@ -85,31 +88,25 @@
     }
 
     function update() {
+        update_stats();
         update_grid();
         update_chart();
+    }
+
+    function update_stats() {
+        kill_count = get_kill_count();
+        death_count = get_death_count();
+        avg_kill_count = +get_avg_kills();
+        avg_death_count = +get_avg_deaths();
+        avg_kd = +get_avg_kd();
+        player_count = get_player_count();
     }
 
     function update_grid() {
         const results = [];
         for (let key of Object.keys(player_stats)) {
             const player = player_stats[key];
-
-            // calculate avg kills for each player
-            const avg_kills = +(
-                player.reduce((sum, p) => sum + p.kill_count, 0) / player.length
-            ).toFixed(2);
-
-            // calculate avg deaths for each player
-            const avg_deaths = +(
-                player.reduce((sum, p) => sum + p.death_count, 0) /
-                player.length
-            ).toFixed(2);
-
-            // calculate avg kd for each player
-            const avg_kd = +(
-                player.reduce((sum, p) => sum + p.kill_death_ration, 0) /
-                player.length
-            ).toFixed(2);
+            const player_name = player[0].name;
 
             // calculate % of wars joined
             const join_percentage = +(
@@ -117,11 +114,24 @@
                 100
             ).toFixed(0);
 
+            const avg_kills = War.get_avg_kills_players(
+                player_name,
+                selected_wars
+            ).toFixed(2);
+            const avg_deaths = War.get_avg_deaths_players(
+                player_name,
+                selected_wars
+            ).toFixed(2);
+            const avg_kd = War.get_avg_kd_players(
+                player_name,
+                selected_wars
+            ).toFixed(2);
+
             results.push({
                 name: player[0].name,
-                kills: avg_kills,
-                deaths: avg_deaths,
-                kd: avg_kd,
+                kills: +avg_kills,
+                deaths: +avg_deaths,
+                kd: +avg_kd,
                 joined: join_percentage,
             });
         }
@@ -190,29 +200,38 @@
         },
     ];
 
+    let kill_count = 0;
+    let death_count = 0;
+    let avg_kill_count = 0;
+    let avg_death_count = 0;
+    let avg_kd = 0;
+    let player_count = 0;
+
     function get_kill_count() {
-        return guild_stats.reduce((sum, g) => sum + g.kill_count, 0);
+        return War.get_total_kills_guilds(guild_name, selected_wars);
     }
     function get_death_count() {
-        return guild_stats.reduce((sum, g) => sum + g.death_count, 0);
-    }
-    function get_all_players() {
-        return guild_stats.map((g) => g.players).flat();
+        return War.get_total_deaths_guilds(guild_name, selected_wars);
     }
 
     function get_avg_kills() {
-        return (get_kill_count() / get_all_players().length).toFixed(2);
+        return War.get_avg_player_kills_guilds(
+            guild_name,
+            selected_wars
+        ).toFixed(2);
     }
     function get_avg_deaths() {
-        return (get_death_count() / get_all_players().length).toFixed(2);
+        return War.get_avg_player_deaths_guilds(
+            guild_name,
+            selected_wars
+        ).toFixed(2);
     }
     function get_avg_kd() {
-        if (get_death_count() == 0) return get_kill_count();
-        return (get_kill_count() / get_death_count()).toFixed(2);
+        return War.get_avg_kd_guilds(guild_name, selected_wars).toFixed(2);
     }
 
     function get_player_count() {
-        return Object.keys(player_stats).length;
+        return War.get_unique_players_guilds(guild_name, selected_wars).size;
     }
 
     function open_player(event: CustomEvent) {
@@ -238,27 +257,27 @@
         <table>
             <tr>
                 <td>Kills</td>
-                <td>{get_kill_count()}</td>
+                <td>{kill_count}</td>
             </tr>
             <tr>
                 <td>Deaths</td>
-                <td>{get_death_count()}</td>
+                <td>{death_count}</td>
             </tr>
             <tr>
                 <td>Avg. Kills</td>
-                <td>{get_avg_kills()}</td>
+                <td>{avg_kill_count}</td>
             </tr>
             <tr>
                 <td>Avg. Deaths</td>
-                <td>{get_avg_deaths()}</td>
+                <td>{avg_death_count}</td>
             </tr>
             <tr>
                 <td>K/D</td>
-                <td>{get_avg_kd()}</td>
+                <td>{avg_kd}</td>
             </tr>
             <tr>
                 <td>Player count</td>
-                <td>{get_player_count()}</td>
+                <td>{player_count}</td>
             </tr>
         </table>
         <CheckboxGroup

@@ -83,6 +83,127 @@ export class War {
 		return this.guilds.find(g => g.name == name)
 	}
 
+	get_player(name: string) {
+		const players = this.guilds.flatMap(guild => guild.get_player(name) ? [guild.get_player(name)] : [])
+		if (players.length == 0) return undefined;
+
+		return players[0]
+	}
+
+
+	static get_guild_stats(guild_name: string, wars: War[]) {
+		return wars.flatMap(war => war.get_guild(guild_name) ? [war.get_guild(guild_name)] : [])
+	}
+
+	static get_total_player_count_guilds(guild_name: string, wars: War[]) {
+		return this.get_guild_stats(guild_name, wars).reduce((sum, guild) => sum + guild.players.length, 0);
+	}
+
+	static get_total_kills_guilds(guild_name: string, wars: War[]) {
+		const guild_stats = this.get_guild_stats(guild_name, wars)
+		return guild_stats.reduce((sum, stat) => sum + stat.kill_count, 0)
+	}
+
+	static get_total_deaths_guilds(guild_name: string, wars: War[]) {
+		const guild_stats = this.get_guild_stats(guild_name, wars)
+		return guild_stats.reduce((sum, stat) => sum + stat.death_count, 0)
+	}
+
+	static get_avg_kills_guilds(guild_name: string, wars: War[]) {
+		const guild_stats = this.get_guild_stats(guild_name, wars)
+		if (guild_stats.length == 0) return 0;
+		return this.get_total_kills_guilds(guild_name, wars) / guild_stats.length
+	}
+
+	static get_avg_deaths_guilds(guild_name: string, wars: War[]) {
+		const guild_stats = this.get_guild_stats(guild_name, wars)
+		if (guild_stats.length == 0) return 0;
+		return this.get_total_deaths_guilds(guild_name, wars) / guild_stats.length
+	}
+
+	static get_avg_player_kills_guilds(guild_name: string, wars: War[]) {
+		const player_count = this.get_total_player_count_guilds(guild_name, wars);
+		const kills = this.get_total_kills_guilds(guild_name, wars);
+		if (player_count == 0) return kills;
+
+		return kills / player_count;
+	}
+
+	static get_avg_player_deaths_guilds(guild_name: string, wars: War[]) {
+		const player_count = this.get_total_player_count_guilds(guild_name, wars);
+		const deaths = this.get_total_deaths_guilds(guild_name, wars);
+		if (player_count == 0) return deaths;
+
+		return deaths / player_count;
+	}
+
+	static get_avg_kd_guilds(guild_name: string, wars: War[]) {
+		const kills = this.get_total_kills_guilds(guild_name, wars)
+		const deaths = this.get_total_deaths_guilds(guild_name, wars)
+		if (deaths == 0) return kills;
+		return kills / deaths
+	}
+
+	static get_unique_players_guilds(guild_name: string, wars: War[]) {
+		const guild_stats = this.get_guild_stats(guild_name, wars)
+		const players = new Set([]);
+		guild_stats.forEach(guild => guild.players.forEach(player => players.add(player.name)))
+		return players;
+	}
+
+	static get_player_stats(player_name: string, wars: War[]) {
+		return wars.flatMap(war => war.get_player(player_name) ? [war.get_player(player_name)] : [])
+	}
+
+	static get_total_kills_players(player_name: string, wars: War[]) {
+		const player_stats = this.get_player_stats(player_name, wars)
+		return player_stats.reduce((sum, stat) => sum + stat.kill_count, 0)
+	}
+
+	static get_total_deaths_players(player_name: string, wars: War[]) {
+		const player_stats = this.get_player_stats(player_name, wars)
+		return player_stats.reduce((sum, stat) => sum + stat.death_count, 0)
+	}
+
+	static get_avg_kills_players(player_name: string, wars: War[]) {
+		const player_stats = this.get_player_stats(player_name, wars)
+		if (player_stats.length == 0) return 0;
+		return this.get_total_kills_players(player_name, wars) / player_stats.length
+	}
+
+	static get_avg_deaths_players(player_name: string, wars: War[]) {
+		const player_stats = this.get_player_stats(player_name, wars)
+		if (player_stats.length == 0) return 0;
+		return this.get_total_deaths_players(player_name, wars) / player_stats.length
+	}
+
+	static get_avg_kd_players(player_name: string, wars: War[]) {
+		const kills = this.get_total_kills_players(player_name, wars)
+		const deaths = this.get_total_deaths_players(player_name, wars)
+		if (deaths == 0) return kills;
+		return kills / deaths
+	}
+
+	static get_joined_wars_count(player_name: string, wars: War[]) {
+		const player_stats = this.get_player_stats(player_name, wars)
+
+		return player_stats.length;
+	}
+
+	static get_wars_count(guild_name: string, wars: War[]) {
+		const war_stats = this.get_guild_stats(guild_name, wars)
+
+		return war_stats.length;
+	}
+
+	static get_joined_wars_percentage(player_name: string, guild_name: string, wars: War[]) {
+		const player_joined = this.get_joined_wars_count(player_name, wars);
+		const guild_joined = this.get_wars_count(guild_name, wars);
+
+		if (guild_joined == 0) return 0;
+
+		return player_joined / guild_joined;
+	}
 }
 
 export class Guild {
@@ -116,5 +237,9 @@ export class Guild {
 
 	get logs() {
 		return this.players.map(p => p.get_all_logs()).flat()
+	}
+
+	get_player(name: string) {
+		return this.players.find(player => player.name == name);
 	}
 }
